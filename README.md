@@ -62,7 +62,7 @@ python-dotenv==0.19.0
 
 1. Clone o repositório
 ```bash
-git clone [url-do-repositorio]
+git clone git@github.com:danielthejoker18/store_app.git
 ```
 
 2. Crie um ambiente virtual
