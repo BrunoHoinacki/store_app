@@ -62,7 +62,7 @@ python-dotenv==0.19.0
 
 1. Clone o repositório
 ```bash
-git clone [url-do-repositorio]
+git clone git@github.com:danielthejoker18/store_app.git
 ```
 
 2. Crie um ambiente virtual
@@ -210,7 +210,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 📧 Suporte
 
-Para suporte e dúvidas, por favor abra uma issue no repositório ou entre em contato através do email [danielmoreira18@hotmail.com].
+Para suporte e dúvidas, por favor abra uma issue no repositório ou entre em contato através do email danielmoreira18@hotmail.com.
 
 ## 🙏 Agradecimentos
 
