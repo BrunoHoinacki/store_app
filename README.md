@@ -210,7 +210,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 📧 Suporte
 
-Para suporte e dúvidas, por favor abra uma issue no repositório ou entre em contato através do email [danielmoreira18@hotmail.com].
+Para suporte e dúvidas, por favor abra uma issue no repositório ou entre em contato através do email danielmoreira18@hotmail.com.
 
 ## 🙏 Agradecimentos
 
