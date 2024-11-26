@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Venda{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Nova Venda</h3>
+            </div>
+            <div class="card-body">
+                <!-- Seleção de Cliente -->
+                <div class="mb-4">
+                    <h4>Cliente</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                {{ form.customer_id.label(class="form-label") }}
+                                {{ form.customer_id(class="form-control select2") }}
+                                {% for error in form.customer_id.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <a href="{{ url_for('customers.new_customer') }}" class="btn btn-success" target="_blank">
+                                <i class="fas fa-plus"></i> Novo Cliente
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seleção de Produto -->
+                <div class="mb-4">
+                    <h4>Adicionar Produto</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Produto</label>
+                            <select id="product-select" class="form-control select2">
+                                <option value="">Selecione ou digite para buscar um produto...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Quantidade</label>
+                            <input type="number" id="quantity-input" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="button" class="btn btn-primary w-100" id="add-item-btn">
+                                Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Itens -->
+                <div class="mb-4">
+                    <h4>Itens da Venda</h4>
+                    <div class="table-responsive">
+                        <table class="table" id="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                    <td><strong id="total-amount">R$ 0,00</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Formulário de Finalização -->
+                <form method="POST" id="sale-form" onsubmit="return validateForm()">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="customer_id" id="form_customer_id">
+                    <div class="mb-3">
+                        {{ form.payment_method.label(class="form-label") }}
+                        {{ form.payment_method(class="form-control") }}
+                    </div>
+                    <div class="mb-3" id="installments-div" style="display: none;">
+                        {{ form.installments.label(class="form-label") }}
+                        {{ form.installments(class="form-control", value="1") }}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.has_interest(class="form-check-input") }}
+                            {{ form.has_interest.label(class="form-check-label") }}
+                        </div>
+                    </div>
+                    <div class="mb-3" id="interest-rate-div" style="display: none;">
+                        {{ form.interest_rate.label(class="form-label") }}
+                        {{ form.interest_rate(class="form-control", value="0") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control") }}
+                    </div>
+                    <div class="mt-4">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuração do Select2 para clientes
+    $('#customer_id').select2({
+        theme: 'bootstrap-5',
+        ajax: {
+            url: '{{ url_for("customers.search_customers") }}',
+            dataType: 'json',
+            delay: 250,
+            data(params) {
+                return {
+                    q: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults(data) {
+                return {
+                    results: data.items.map(customer => ({
+                        id: customer.id,
+                        text: `${customer.name} (${customer.email})`
+                    })),
+                    pagination: {
+                        more: data.has_next
+                    }
+                };
+            },
+            cache: true
+        },
+        placeholder: 'Selecione ou digite para buscar um cliente...',
+        minimumInputLength: 0,
+        language: {
+            inputTooShort() { return 'Digite para buscar um cliente...'; },
+            noResults() { return 'Nenhum cliente encontrado'; },
+            searching() { return 'Buscando...'; }
+        }
+    }).on('change', function(e) {
+        // Atualiza o campo hidden do formulário quando o cliente é selecionado
+        document.getElementById('form_customer_id').value = e.target.value;
+    });
+
+    // Configuração do Select2 para produtos
+    $('#product-select').select2({
+        theme: 'bootstrap-5',
+        ajax: {
+            url: '{{ url_for("sales.get_products") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        },
+        placeholder: 'Selecione ou digite para buscar um produto...',
+        minimumInputLength: 0,
+        language: {
+            inputTooShort: function() {
+                return 'Digite para buscar...';
+            },
+            noResults: function() {
+                return 'Nenhum produto encontrado';
+            },
+            searching: function() {
+                return 'Buscando...';
+            }
+        }
+    });
+
+    // Função de validação do formulário
+    function validateForm() {
+        const items = document.querySelectorAll('#items-table tbody tr');
+        if (items.length === 0) {
+            alert('Adicione pelo menos um item à venda antes de finalizar.');
+            return false;
+        }
+
+        // Garantir que o número de parcelas seja pelo menos 1
+        const installments = document.getElementById('installments');
+        if (installments.value < 1) {
+            installments.value = 1;
+        }
+
+        // Garantir que a taxa de juros não seja negativa
+        const interestRate = document.getElementById('interest_rate');
+        if (interestRate && interestRate.value < 0) {
+            interestRate.value = 0;
+        }
+
+        return true;
+    }
+
+    // Mostrar/ocultar campos de juros
+    document.getElementById('has_interest').addEventListener('change', function() {
+        const interestRateDiv = document.getElementById('interest-rate-div');
+        interestRateDiv.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            document.getElementById('interest_rate').value = '0';
+        }
+    });
+
+    // Mostrar/ocultar campos de parcelas
+    document.getElementById('payment_method').addEventListener('change', function() {
+        const installmentsDiv = document.getElementById('installments-div');
+        if (this.value === 'credit') {
+            installmentsDiv.style.display = 'block';
+        } else {
+            installmentsDiv.style.display = 'none';
+            document.getElementById('installments').value = '1';
+        }
+    });
+
+    // Inicializar estado dos campos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar método de pagamento inicial
+        const paymentMethod = document.getElementById('payment_method');
+        if (paymentMethod.value === 'credit') {
+            document.getElementById('installments-div').style.display = 'block';
+        }
+
+        // Verificar juros inicial
+        const hasInterest = document.getElementById('has_interest');
+        if (hasInterest.checked) {
+            document.getElementById('interest-rate-div').style.display = 'block';
+        }
+    });
+
+    // Funções de manipulação de itens
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(value);
+    }
+
+    function updateTotal() {
+        let total = 0;
+        document.querySelectorAll('[data-subtotal]').forEach(el => {
+            total += parseFloat(el.dataset.subtotal);
+        });
+        document.getElementById('total-amount').textContent = formatCurrency(total);
+    }
+
+    function addItemToTable(item) {
+        const tbody = document.querySelector('#items-table tbody');
+        const tr = document.createElement('tr');
+        tr.dataset.itemId = item.id;
+        tr.innerHTML = `
+            <td>${item.product_name}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm quantity-input" 
+                       value="${item.quantity}" min="1" style="width: 80px">
+            </td>
+            <td>${formatCurrency(item.price)}</td>
+            <td data-subtotal="${item.subtotal}">${formatCurrency(item.subtotal)}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger remove-item">
+                    Remover
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+        updateTotal();
+
+        // Adicionar evento para atualização de quantidade
+        const quantityInput = tr.querySelector('.quantity-input');
+        quantityInput.addEventListener('change', async function() {
+            try {
+                const response = await fetch(`/sales/update-item/${item.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `quantity=${this.value}`
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    const subtotalCell = tr.querySelector('[data-subtotal]');
+                    subtotalCell.dataset.subtotal = data.subtotal;
+                    subtotalCell.textContent = formatCurrency(data.subtotal);
+                    updateTotal();
+                } else {
+                    alert(data.message);
+                    this.value = item.quantity;
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar quantidade:', error);
+                this.value = item.quantity;
+            }
+        });
+
+        // Adicionar evento para remoção
+        const removeButton = tr.querySelector('.remove-item');
+        removeButton.addEventListener('click', async function() {
+            try {
+                const response = await fetch(`/sales/remove-item/${item.id}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    tr.remove();
+                    updateTotal();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Erro ao remover item:', error);
+            }
+        });
+    }
+
+    // Carregar itens existentes
+    async function loadItems() {
+        try {
+            const response = await fetch('{{ url_for("sales.get_sale_items") }}');
+            const items = await response.json();
+            items.forEach(addItemToTable);
+        } catch (error) {
+            console.error('Erro ao carregar itens:', error);
+        }
+    }
+
+    // Adicionar novo item
+    document.getElementById('add-item-btn').addEventListener('click', async function() {
+        const productSelect = document.getElementById('product-select');
+        const quantityInput = document.getElementById('quantity-input');
+        
+        if (!productSelect.value) {
+            alert('Selecione um produto');
+            return;
+        }
+
+        try {
+            const response = await fetch('{{ url_for("sales.add_sale_item") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_id=${productSelect.value}&quantity=${quantityInput.value}`
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                addItemToTable(data.item);
+                productSelect.value = '';
+                $('#product-select').trigger('change');
+                quantityInput.value = 1;
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar item:', error);
+        }
+    });
+
+    // Controle de parcelas e juros
+    const paymentMethod = document.getElementById('payment_method');
+    const installmentsDiv = document.getElementById('installments-div');
+    const hasInterest = document.getElementById('has_interest');
+    const interestRateDiv = document.getElementById('interest-rate-div');
+
+    function toggleInstallments() {
+        const showInstallments = paymentMethod.value === 'credit_card';
+        installmentsDiv.style.display = showInstallments ? 'block' : 'none';
+        if (!showInstallments) {
+            document.getElementById('installments').value = 1;
+            hasInterest.checked = false;
+            toggleInterestRate();
+        }
+    }
+
+    function toggleInterestRate() {
+        interestRateDiv.style.display = hasInterest.checked ? 'block' : 'none';
+        if (!hasInterest.checked) {
+            document.getElementById('interest_rate').value = 0;
+        }
+    }
+
+    paymentMethod.addEventListener('change', toggleInstallments);
+    hasInterest.addEventListener('change', toggleInterestRate);
+
+    // Estado inicial
+    toggleInstallments();
+    toggleInterestRate();
+    loadItems();
+});
+</script>
+{% endblock %}

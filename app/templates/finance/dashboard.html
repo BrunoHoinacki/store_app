@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Controle Financeiro{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row align-items-center mb-4">
+        <div class="col-auto">
+            <h2 class="mb-0">Controle Financeiro</h2>
+        </div>
+        <div class="col">
+            <form class="d-flex gap-2 align-items-center" method="GET">
+                <select name="period" class="form-select" style="max-width: 200px;" onchange="this.form.submit()">
+                    <option value="today" {% if period == 'today' %}selected{% endif %}>Hoje</option>
+                    <option value="7days" {% if period == '7days' %}selected{% endif %}>Últimos 7 dias</option>
+                    <option value="30days" {% if period == '30days' %}selected{% endif %}>Últimos 30 dias</option>
+                    <option value="all" {% if period == 'all' %}selected{% endif %}>Todas as vendas</option>
+                    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Personalizado</option>
+                </select>
+                {% if period == 'custom' %}
+                <input type="date" name="start_date" class="form-control" style="max-width: 150px;" value="{{ start_date.strftime('%Y-%m-%d') if start_date else '' }}">
+                <input type="date" name="end_date" class="form-control" style="max-width: 150px;" value="{{ end_date.strftime('%Y-%m-%d') if end_date else '' }}">
+                {% endif %}
+                <select name="payment_method" class="form-select" style="max-width: 200px;">
+                    <option value="">Forma de Pagamento</option>
+                    <option value="money" {% if payment_method == 'money' %}selected{% endif %}>Dinheiro</option>
+                    <option value="credit_card" {% if payment_method == 'credit_card' %}selected{% endif %}>Cartão de Crédito</option>
+                    <option value="debit_card" {% if payment_method == 'debit_card' %}selected{% endif %}>Cartão de Débito</option>
+                    <option value="pix" {% if payment_method == 'pix' %}selected{% endif %}>PIX</option>
+                    <option value="bank_transfer" {% if payment_method == 'bank_transfer' %}selected{% endif %}>Transferência</option>
+                </select>
+                <input type="number" name="min_value" class="form-control form-control-sm" placeholder="Valor Mínimo" value="{{ min_value if min_value }}" step="0.01" style="max-width: 150px;">
+                <input type="number" name="max_value" class="form-control form-control-sm" placeholder="Valor Máximo" value="{{ max_value if max_value }}" step="0.01" style="max-width: 150px;">
+                <button type="submit" class="btn btn-primary btn-sm" style="width: 100px;">
+                    <i class="fas fa-filter me-1"></i>
+                </button>
+                <a href="{{ url_for('finance.finance_dashboard') }}" class="btn btn-outline-secondary btn-sm" style="width: 100px;">
+                    <i class="fas fa-times me-1"></i>
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Total de Vendas</h6>
+                            <h3 class="mb-0">R$ {{ "%.2f"|format(total_sales) }}</h3>
+                        </div>
+                        <i class="fas fa-shopping-cart fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Total de Itens</h6>
+                            <h3 class="mb-0">{{ total_items }}</h3>
+                        </div>
+                        <i class="fas fa-box fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Custo Total</h6>
+                            <h3 class="mb-0">R$ {{ "%.2f"|format(total_cost) }}</h3>
+                        </div>
+                        <i class="fas fa-tags fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Lucro Total</h6>
+                            <h3 class="mb-0">R$ {{ "%.2f"|format(total_profit) }}</h3>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-money-bill-wave me-2 text-primary"></i>
+                        Formas de Pagamento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Método</th>
+                                    <th class="text-center">Quantidade</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for method, data in payment_methods.items() %}
+                                <tr>
+                                    <td>
+                                        {% if method == 'money' %}
+                                            <i class="fas fa-money-bill text-success me-2"></i>Dinheiro
+                                        {% elif method == 'credit_card' %}
+                                            <i class="fas fa-credit-card text-primary me-2"></i>Cartão de Crédito
+                                        {% elif method == 'debit_card' %}
+                                            <i class="fas fa-credit-card text-info me-2"></i>Cartão de Débito
+                                        {% elif method == 'pix' %}
+                                            <i class="fas fa-qrcode text-warning me-2"></i>PIX
+                                        {% elif method == 'bank_transfer' %}
+                                            <i class="fas fa-university text-secondary me-2"></i>Transferência
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ data.count }}</td>
+                                    <td class="text-end">R$ {{ "%.2f"|format(data.total) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2 text-warning"></i>
+                        Produtos Mais Vendidos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Produto</th>
+                                    <th class="text-center">Quantidade</th>
+                                    <th class="text-end">Receita</th>
+                                    <th class="text-end">Lucro</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if top_products_list %}
+                                    {% for item in top_products_list %}
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-box text-primary me-2"></i>
+                                                {{ item.product.name }}
+                                            </td>
+                                            <td class="text-center">{{ item.quantity }}</td>
+                                            <td class="text-end">R$ {{ "%.2f"|format(item.revenue) }}</td>
+                                            <td class="text-end">R$ {{ "%.2f"|format(item.revenue - (item.quantity * item.product.cost_price)) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="fas fa-box-open fa-2x mb-3 d-block"></i>
+                                            Nenhum produto vendido no período
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2 text-primary"></i>
+                Vendas no Período
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Forma de Pagamento</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Lucro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                            <tr>
+                                <td>{{ sale.date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <i class="fas fa-user text-secondary me-2"></i>
+                                    {{ sale.customer.name if sale.customer else 'Cliente não registrado' }}
+                                </td>
+                                <td>{{ sale.payment_method_display }}</td>
+                                <td class="text-end">R$ {{ "%.2f"|format(sale.total_amount) }}</td>
+                                <td class="text-end">R$ {{ "%.2f"|format(sale.profit) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

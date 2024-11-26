@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Painel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Painel</h2>
+    <a href="{{ url_for('finance.finance_dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-chart-pie me-2"></i>
+        Dashboard Financeiro
+    </a>
+</div>
+
+<div class="row mb-4">
+    <!-- Vendas de Hoje -->
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Vendas Hoje</h6>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(today_total) }}</h3>
+                        <small>{{ today_count }} venda{{ 's' if today_count != 1 }}</small>
+                    </div>
+                    <i class="fas fa-shopping-cart fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vendas da Semana -->
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Vendas (7 dias)</h6>
+                        <h3 class="mb-0">R$ {{ "%.2f"|format(week_total) }}</h3>
+                        <small>{{ week_count }} venda{{ 's' if week_count != 1 }}</small>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total de Produtos -->
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Total de Produtos</h6>
+                        <h3 class="mb-0">{{ products_count }}</h3>
+                        <small>{{ low_stock }} com baixo estoque</small>
+                    </div>
+                    <i class="fas fa-box fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total de Clientes -->
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Total de Clientes</h6>
+                        <h3 class="mb-0">{{ customers_count }}</h3>
+                        <small>clientes ativos</small>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas -->
+<div class="row mb-4">
+    {% if out_of_stock > 0 %}
+    <div class="col-12">
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Atenção!</strong> {{ out_of_stock }} produto{{ 's' if out_of_stock != 1 }} sem estoque!
+            <a href="{{ url_for('products.product_list') }}" class="alert-link">Verificar produtos</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row">
+    <!-- Produtos Mais Vendidos -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-star me-2"></i>
+                    Produtos Mais Vendidos (30 dias)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if top_products %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th class="text-end">Quantidade</th>
+                                <th class="text-end">Receita</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td class="text-end">{{ product.total_quantity }}</td>
+                                <td class="text-end">R$ {{ "%.2f"|format(product.total_revenue) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Nenhuma venda registrada nos últimos 30 dias.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendas Recentes -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Vendas Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sales %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>{{ sale.date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ sale.customer.name if sale.customer else 'Cliente não registrado' }}</td>
+                                <td class="text-end">R$ {{ "%.2f"|format(sale.total_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Nenhuma venda recente.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

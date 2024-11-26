@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">{{ 'Clientes Ativos' if active else 'Clientes Inativos' }}</h1>
+        <div>
+            <a href="{{ url_for('customers.customer_list', active=not active) }}" class="btn btn-secondary me-2">
+                <i class="bi bi-people"></i> 
+                {{ 'Ver Inativos' if active else 'Ver Ativos' }}
+            </a>
+            {% if active %}
+            <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Novo Cliente
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-people me-1"></i>
+            Lista de Clientes {{ 'Ativos' if active else 'Inativos' }}
+        </div>
+        <div class="card-body">
+            <table id="customersTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>Total de Compras</th>
+                        <th>Última Compra</th>
+                        {% if not active %}
+                        <th>Data Inativação</th>
+                        <th>Motivo</th>
+                        {% endif %}
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.name }}</td>
+                        <td>{{ customer.email or '-' }}</td>
+                        <td>{{ customer.phone or '-' }}</td>
+                        <td>{{ customer.sales|length }}</td>
+                        <td>
+                            {% if customer.sales %}
+                                {% set latest_sale = customer.sales|sort(attribute='date', reverse=true)|first %}
+                                {{ latest_sale.date.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        {% if not active %}
+                        <td>
+                            {% if customer.inactivated_at %}
+                                {{ customer.inactivated_at.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ customer.inactivation_reason or '-' }}</td>
+                        {% endif %}
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('customers.view_customer', id=customer.id) }}" class="btn btn-info btn-sm" title="Ver Detalhes">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if active %}
+                                <a href="{{ url_for('customers.edit_customer', id=customer.id) }}" class="btn btn-primary btn-sm" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if customer.sales %}
+                                <button onclick="showInactivateModal({{ customer.id }})" class="btn btn-warning btn-sm" title="Inativar">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                                {% endif %}
+                                {% else %}
+                                <form action="{{ url_for('customers.reactivate_customer', id=customer.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-success btn-sm" title="Reativar" onclick="return confirm('Tem certeza que deseja reativar este cliente?')">
+                                        <i class="bi bi-person-check"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Inativação -->
+<div class="modal fade" id="inactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Inativar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="inactivateForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="inactivationReason" class="form-label">Motivo da Inativação</label>
+                        <textarea class="form-control" id="inactivationReason" name="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Inativar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#customersTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            responsive: true,
+            order: [[0, 'asc']],
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+            columnDefs: [
+                {
+                    targets: -1,
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        });
+    });
+
+    function showInactivateModal(customerId) {
+        const modal = new bootstrap.Modal(document.getElementById('inactivateModal'));
+        const form = document.getElementById('inactivateForm');
+        form.action = "{{ url_for('customers.inactivate_customer', id=0) }}".replace('0', customerId);
+        modal.show();
+    }
+</script>
+{% endblock %}
+{% endblock %}
