@@ -14,27 +14,27 @@
                     {{ form.hidden_tag() }}
                     <div class="mb-3">
                         {{ form.name.label(class="form-label") }}
-                        {{ form.name(class="form-control") }}
+                        {{ form.name(class="form-control", placeholder="Exemplo: Cadeira de escritório") }}
                     </div>
                     <div class="mb-3">
                         {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control") }}
+                        {{ form.description(class="form-control", placeholder="Exemplo: Cadeira ergonômica, ajuste de altura e apoio para os braços.") }}
                     </div>
                     <div class="mb-3">
                         {{ form.cost_price.label(class="form-label") }}
-                        {{ form.cost_price(class="form-control") }}
+                        {{ form.cost_price(class="form-control", placeholder="Exemplo: 150.00") }}
                     </div>
                     <div class="mb-3">
                         {{ form.sale_price.label(class="form-label") }}
-                        {{ form.sale_price(class="form-control") }}
+                        {{ form.sale_price(class="form-control", placeholder="Exemplo: 250.00") }}
                     </div>
                     <div class="mb-3">
                         {{ form.stock.label(class="form-label") }}
-                        {{ form.stock(class="form-control") }}
+                        {{ form.stock(class="form-control", placeholder="Exemplo: 50") }}
                     </div>
                     <div class="mb-3">
                         {{ form.category_id.label(class="form-label") }}
-                        {{ form.category_id(class="form-control") }}
+                        {{ form.category_id(class="form-control", placeholder="Selecione uma categoria") }}
                     </div>
                     {{ form.submit(class="btn btn-primary") }}
                     <a href="{{ url_for('products.product_list') }}" class="btn btn-secondary">Cancelar</a>
@@ -43,4 +43,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
