@@ -1,1 +1,18 @@
- 
+ # Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+
+# Banco de dados
+*.db
+
+# Migration files
+migrations/
