@@ -13,12 +13,12 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Entrar')
 
 class ProductForm(FlaskForm):
-    name = StringField('Nome', validators=[DataRequired(), Length(max=100)])
-    description = TextAreaField('Descrição')
-    cost_price = FloatField('Preço de Custo', validators=[DataRequired(), NumberRange(min=0)])
-    sale_price = FloatField('Preço de Venda', validators=[DataRequired(), NumberRange(min=0)])
-    stock = IntegerField('Estoque', validators=[DataRequired(), NumberRange(min=0)])
-    category_id = SelectField('Categoria', coerce=int, validators=[DataRequired()])
+    name = StringField('Nome', validators=[DataRequired(), Length(max=100)], render_kw={'placeholder': 'Exemplo: Cadeira de escritório'})
+    description = TextAreaField('Descrição', render_kw={'placeholder': 'Exemplo: Cadeira ergonômica, ajuste de altura e apoio para os braços.'})
+    cost_price = FloatField('Preço de Custo', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 150.00'})
+    sale_price = FloatField('Preço de Venda', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 250.00'})
+    stock = IntegerField('Estoque', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 50'})
+    category_id = SelectField('Categoria', coerce=int, validators=[DataRequired()], render_kw={'placeholder': 'Selecione uma categoria'})
     submit = SubmitField('Salvar')
 
 class CustomerForm(FlaskForm):

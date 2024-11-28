@@ -6,7 +6,11 @@ from app import db
 from datetime import datetime, timedelta
 from sqlalchemy import func, or_
 import uuid
+import logging
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+
+# Configuração do logger
+logging.basicConfig(level=logging.DEBUG)
 
 # Create blueprints
 main = Blueprint('main', __name__)
@@ -111,21 +115,49 @@ def product_list():
 def add_product():
     form = ProductForm()
     form.category_id.choices = [(c.id, c.name) for c in Category.query.all()]
-    
+
+    # Log do status da validação do formulário
     if form.validate_on_submit():
-        product = Product(
-            name=form.name.data,
-            description=form.description.data,
-            cost_price=form.cost_price.data,
-            sale_price=form.sale_price.data,
-            stock=form.stock.data,
-            category_id=form.category_id.data
-        )
-        db.session.add(product)
-        db.session.commit()
-        flash('Produto adicionado com sucesso')
-        return redirect(url_for('products.product_list'))
+        # Verificando se o formulário passou pela validação
+        logging.debug("Formulário validado com sucesso.")
+        
+        # Log dos dados do formulário
+        logging.debug(f"Dados do formulário: {{"
+                      f"'name': {form.name.data}, "
+                      f"'description': {form.description.data}, "
+                      f"'cost_price': {form.cost_price.data}, "
+                      f"'sale_price': {form.sale_price.data}, "
+                      f"'stock': {form.stock.data}, "
+                      f"'category_id': {form.category_id.data} }}")
+
+        try:
+            product = Product(
+                name=form.name.data,
+                description=form.description.data,
+                cost_price=float(form.cost_price.data),
+                sale_price=float(form.sale_price.data),
+                stock=form.stock.data,
+                category_id=form.category_id.data
+            )
+            db.session.add(product)
+            db.session.commit()
+
+            # Log após o commit
+            logging.debug(f"Produto '{form.name.data}' adicionado com sucesso.")
+            
+            flash('Produto adicionado com sucesso')
+            return redirect(url_for('products.product_list'))
+        
+        except Exception as e:
+            # Log de erro no commit
+            logging.error(f"Erro ao salvar produto: {str(e)}")
+            flash('Ocorreu um erro ao adicionar o produto. Tente novamente.')
     
+    # Se o formulário não for válido, exibe os erros
+    if form.errors:
+        logging.error(f"Erros no formulário: {form.errors}")
+        flash('Por favor, corrija os erros no formulário e tente novamente.')
+
     return render_template('products/add.html', form=form)
 
 @products.route('/products/edit/<int:id>', methods=['GET', 'POST'])
