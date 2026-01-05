@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, FloatField, IntegerField, SelectField, TextAreaField, BooleanField, FieldList, FormField, DecimalField, SubmitField
+from wtforms import StringField, PasswordField, IntegerField, SelectField, TextAreaField, BooleanField, FieldList, FormField, DecimalField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange, ValidationError, Optional, Email
 from app.models import Product, Customer
 
@@ -15,8 +15,8 @@ class LoginForm(FlaskForm):
 class ProductForm(FlaskForm):
     name = StringField('Nome', validators=[DataRequired(), Length(max=100)], render_kw={'placeholder': 'Exemplo: Cadeira de escritório'})
     description = TextAreaField('Descrição', render_kw={'placeholder': 'Exemplo: Cadeira ergonômica, ajuste de altura e apoio para os braços.'})
-    cost_price = FloatField('Preço de Custo', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 150.00'})
-    sale_price = FloatField('Preço de Venda', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 250.00'})
+    cost_price = DecimalField('Preço de Custo', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 150.00'})
+    sale_price = DecimalField('Preço de Venda', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 250.00'})
     stock = IntegerField('Estoque', validators=[DataRequired(), NumberRange(min=0)], render_kw={'placeholder': 'Exemplo: 50'})
     category_id = SelectField('Categoria', coerce=int, validators=[DataRequired()], render_kw={'placeholder': 'Selecione uma categoria'})
     submit = SubmitField('Salvar')

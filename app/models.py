@@ -10,6 +10,8 @@ garantindo a integridade e facilitando operações comuns do negócio.
 """
 
 from datetime import datetime
+from decimal import Decimal
+from sqlalchemy import Numeric
 from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -75,8 +77,8 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    cost_price = db.Column(db.Float, nullable=False)
-    sale_price = db.Column(db.Float, nullable=False)
+    cost_price = db.Column(db.Numeric(10, 2), nullable=False)
+    sale_price = db.Column(db.Numeric(10, 2), nullable=False)
     stock = db.Column(db.Integer, nullable=False, default=0)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -143,9 +145,9 @@ class Sale(db.Model):
     payment_method = db.Column(db.String(50), nullable=False)
     installments = db.Column(db.Integer, default=1)
     has_interest = db.Column(db.Boolean, default=False)
-    interest_rate = db.Column(db.Float, default=0)
-    subtotal = db.Column(db.Float, nullable=False)
-    total_amount = db.Column(db.Float, nullable=False)
+    interest_rate = db.Column(db.Numeric(5, 2), default=0)
+    subtotal = db.Column(db.Numeric(10, 2), nullable=False)
+    total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     notes = db.Column(db.Text)
     status = db.Column(db.String(20), default='active')
     cancelled_at = db.Column(db.DateTime, nullable=True)
@@ -217,7 +219,7 @@ class SaleItem(db.Model):
     sale_id = db.Column(db.Integer, db.ForeignKey('sale.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
     product = db.relationship('Product')
 
     @property
@@ -244,7 +246,7 @@ class TempSaleItem(db.Model):
     session_id = db.Column(db.String(100), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     product = db.relationship('Product')
 
